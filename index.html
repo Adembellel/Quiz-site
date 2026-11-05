@@ -33,28 +33,28 @@ const L=(o,l)=>(o&&(o[l]||o.en||o.fr))||"";
 const ok=()=>API.startsWith("https://");
 async function get(p){if(!ok())return null;try{return await (await fetch(API+"?"+new URLSearchParams(p))).json()}catch(e){return null}}
 async function post(o){if(!ok())return null;try{return await (await fetch(API,{method:"POST",body:JSON.stringify(o)})).json()}catch(e){return null}}
-const top=()=>`<div class="top"><span></span><span><button class="lg" data-l="en">EN</button> <button class="lg" data-l="fr">FR</button></span></div>`;
+const hdr=()=>`<div class="top"><span></span><span><button class="lg" data-l="en">EN</button> <button class="lg" data-l="fr">FR</button></span></div>`;
 const bind=fn=>app.querySelectorAll(".lg").forEach(b=>b.onclick=()=>{lang=b.dataset.l;fn()});
-function msg(txt,fn){app.innerHTML=top()+`<button id="bk">${t("back")}</button><p class="err">${txt}</p>`;bind(fn||home);bk.onclick=home}
+function msg(txt,fn){app.innerHTML=hdr()+`<button id="bk">${t("back")}</button><p class="err">${txt}</p>`;bind(fn||home);bk.onclick=home}
 function confirmBox(yes){const o=document.createElement("div");o.className="ov";o.innerHTML=`<div class="card"><h2>${t("cfT")}</h2><p>${esc(t("cfB").replace("{n}",who.n).replace("{d}",who.d).replace("{p}",who.p))}</p><p><button class="p" id="cy">${t("yes")}</button> <button id="cn">${t("no")}</button></p></div>`;document.body.appendChild(o);document.getElementById("cn").onclick=()=>o.remove();document.getElementById("cy").onclick=()=>{o.remove();yes()}}
 async function home(){history.replaceState(null,"",location.pathname);
-app.innerHTML=top()+`<h1>${t("title")}</h1><p class="mu">${t("wait")}</p>`;bind(home);
+app.innerHTML=hdr()+`<h1>${t("title")}</h1><p class="mu">${t("wait")}</p>`;bind(home);
 const r=await get({action:"topics"});
-if(!r||!r.topics){app.innerHTML=top()+`<h1>${t("title")}</h1><p class="err">${ok()?t("conn"):t("nosetup")}</p>`;bind(home);return}
-app.innerHTML=top()+`<h1>${t("title")}</h1><p class="mu">${t("intro")}</p><h2>${t("topics")}</h2><div class="grid">${r.topics.map(x=>`<button class="card topic" data-id="${esc(x.id)}">${esc(x.e)} ${esc(L(x,lang))}<small>${x.open} ${t("open_n")}</small></button>`).join("")}</div><p class="mu">${t("tzn")}</p>`;
+if(!r||!r.topics){app.innerHTML=hdr()+`<h1>${t("title")}</h1><p class="err">${ok()?t("conn"):t("nosetup")}</p>`;bind(home);return}
+app.innerHTML=hdr()+`<h1>${t("title")}</h1><p class="mu">${t("intro")}</p><h2>${t("topics")}</h2><div class="grid">${r.topics.map(x=>`<button class="card topic" data-id="${esc(x.id)}">${esc(x.e)} ${esc(L(x,lang))}<small>${x.open} ${t("open_n")}</small></button>`).join("")}</div><p class="mu">${t("tzn")}</p>`;
 bind(home);app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicView(b.dataset.id,b.textContent))}
-async function topicView(id){app.innerHTML=top()+`<button id="bk">${t("back")}</button><p class="mu">${t("wait")}</p>`;bind(()=>topicView(id));bk.onclick=home;
+async function topicView(id){app.innerHTML=hdr()+`<button id="bk">${t("back")}</button><p class="mu">${t("wait")}</p>`;bind(()=>topicView(id));bk.onclick=home;
 const r=await get({action:"quizzes",topic:id});if(!r||!r.quizzes){msg(t("conn"));return}
 const now=Date.now();
-app.innerHTML=top()+`<button id="bk">${t("back")}</button><h1>${t("topics")}</h1>`+(r.quizzes.length?r.quizzes.map(q=>`<div class="card" style="margin-bottom:12px"><b>${esc(L(q.title,lang))}</b><p class="mu">${now<q.open?t("opens")+": "+fmt(q.open):t("closes")+": "+fmt(q.close)} · ${t("att")}: ${q.att?q.att:t("unl")}</p>${now>=q.open?`<button class="p go" data-id="${q.id}">${t("start")}</button>`:`<span class="mu">${t("soon")}</span>`}</div>`).join(""):`<p class="mu">${t("none")}</p>`)+`<p class="mu">${t("tzn")}</p>`;
+app.innerHTML=hdr()+`<button id="bk">${t("back")}</button><h1>${t("topics")}</h1>`+(r.quizzes.length?r.quizzes.map(q=>`<div class="card" style="margin-bottom:12px"><b>${esc(L(q.title,lang))}</b><p class="mu">${now<q.open?t("opens")+": "+fmt(q.open):t("closes")+": "+fmt(q.close)} · ${t("att")}: ${q.att?q.att:t("unl")}</p>${now>=q.open?`<button class="p go" data-id="${q.id}">${t("start")}</button>`:`<span class="mu">${t("soon")}</span>`}</div>`).join(""):`<p class="mu">${t("none")}</p>`)+`<p class="mu">${t("tzn")}</p>`;
 bind(()=>topicView(id));bk.onclick=home;app.querySelectorAll(".go").forEach(b=>b.onclick=()=>intro(b.dataset.id))}
-async function intro(id){app.innerHTML=top()+`<p class="mu">${t("wait")}</p>`;bind(()=>intro(id));
+async function intro(id){app.innerHTML=hdr()+`<p class="mu">${t("wait")}</p>`;bind(()=>intro(id));
 const r=await get({action:"quiz",id});if(!r)return msg(t("conn"));
 if(r.error)return msg(t("e_notfound"));
 if(r.status=="upcoming")return msg(t("e_notopen")+" ("+t("opens")+": "+fmt(r.open)+")");
 if(r.status=="closed")return msg(t("e_closed"));
 cur=r.quiz;ql=cur.langs.indexOf(lang)>=0?lang:cur.langs[0];
-app.innerHTML=top()+`<button id="bk">${t("back")}</button><h1>${esc(L(cur.title,ql))}</h1><p class="mu">${t("closes")}: ${fmt(cur.close)} · ${t("att")}: ${cur.att?cur.att:t("unl")}</p>
+app.innerHTML=hdr()+`<button id="bk">${t("back")}</button><h1>${esc(L(cur.title,ql))}</h1><p class="mu">${t("closes")}: ${fmt(cur.close)} · ${t("att")}: ${cur.att?cur.att:t("unl")}</p>
 <div class="row"><div><label>${t("nm")}</label><input type="text" id="wn" value="${esc(who.n)}"></div><div><label>${t("dc")}</label><input type="text" id="wd" value="${esc(who.d)}"></div><div><label>${t("pod")}</label><input type="text" id="wp" value="${esc(who.p)}"></div></div>
 ${cur.langs.length>1?`<label>${t("ql")}</label><select id="wl">${cur.langs.map(l=>`<option value="${l}" ${l==ql?"selected":""}>${l=="en"?"English":"Français"}</option>`).join("")}</select>`:""}
 <p id="msg" class="err"></p><p><button class="p" id="st">${t("start")}</button></p>`;
