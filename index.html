@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Learning Pods: Weekly Quizzes</title>
+<style>
+:root{--bg:#f6f3ec;--fg:#1b1f3b;--card:#fff;--bd:#e4dfd3;--ac:#d9622b;--mu:#6b6f86;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1f3b;--fg:#f6f3ec;--card:#262b52;--bd:#383e6e;--mu:#aab0d0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1f3b;--fg:#f6f3ec;--card:#262b52;--bd:#383e6e;--mu:#aab0d0;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Helvetica,Arial,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:30px;margin:0 0 4px}h2{font-size:22px}p.mu,.mu{color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin:16px 0}
+.card,.q{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:10px 14px}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.topic{text-align:left;font-size:18px}.topic small{display:block;color:var(--mu);font-size:13px}
+input[type=text],textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:200px}
+label.o{display:block;padding:8px 10px;margin:6px 0;border:1px solid var(--bd);border-radius:10px;cursor:pointer}
+label.o:has(input:checked){border-color:var(--ac);background:var(--bg)}
+.lv{margin:28px 0 8px;color:var(--ac);font-weight:700;text-transform:uppercase;font-size:13px;letter-spacing:.08em}
+.bar{height:10px;border-radius:5px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.big{font-size:48px;font-weight:700;margin:0}.err{color:#c0392b;font-weight:700}
+.top{display:flex;justify-content:space-between;margin-bottom:8px}table{border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid var(--bd);padding:6px 10px;text-align:left;white-space:nowrap}.tc{display:flex;flex-direction:column;gap:6px}.tc .topic{flex:1}.ed{font-size:13px}label{display:block;margin-top:8px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}.ov .card{max-width:440px}.sw{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:40;width:58px;height:30px;border-radius:15px;border:1px solid var(--bd);background:var(--card);padding:0}.sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ac);transition:transform .2s;display:flex;align-items:center;justify-content:center;font-size:13px;font-style:normal}.sw[aria-checked=true] i{transform:translateX(28px)}main{padding-top:56px}select{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);max-width:100%}input[type=number],input[type=datetime-local]{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);box-sizing:border-box;max-width:100%}.q{margin:12px 0}main{max-width:900px}</style></head><body><main id="app"></main><button id="th" class="sw" role="switch" aria-label="Dark mode" aria-checked="false"><i></i></button>
+<script>
+const API="https://script.google.com/macros/s/AKfycbwMyOAvUDFrGT_1nnZRF5mQhG8UccLvZ74rsVH0ujYCGc8WLGG_WD5hmFMsSdveJTlq4A/exec";
+const S={en:{title:"Weekly quizzes",intro:"Pick your topic, then choose an open quiz. Your supervisor decides when each quiz opens and closes.",topics:"Topics",open_n:"open",back:"← Back",closes:"Closes",opens:"Opens",start:"Start",soon:"Not open yet",none:"No quizzes right now.",nm:"Your name",dc:"Discord username",pod:"Pod number",ql:"Quiz language",need:"Please fill in your name, Discord username and pod number.",sub:"Submit",cfT:"Submit your answers?",cfB:"You are submitting as {n} ({d}), pod {p}. You can’t change your answers afterwards.",yes:"Yes, submit",no:"Go back",score:"Your score",pending:"Some answers still need marking by your supervisor. Your final score will be updated.",sent:"Your result was sent to your supervisor ✓",conn:"Couldn’t connect. Please try again in a moment.",nosetup:"This site isn’t connected yet.",tzn:"All times are in Algeria time.",att:"Attempts allowed",unl:"unlimited",e_attempts:"You have no attempts left for this quiz.",e_closed:"This quiz is closed.",e_notopen:"This quiz is not open yet.",e_notfound:"This quiz doesn’t exist.",e_other:"Something went wrong. Please try again.",right:"Correct",wrong:"Wrong",corr:"Correct answer",model:"Model answer",ph:"Write your answer",q:"Question",pts:"pts",wait:"Loading…"},
+fr:{title:"Quiz de la semaine",intro:"Choisis ton thème, puis un quiz ouvert. Ton superviseur décide de l’ouverture et de la fermeture de chaque quiz.",topics:"Thèmes",open_n:"ouvert(s)",back:"← Retour",closes:"Ferme",opens:"Ouvre",start:"Commencer",soon:"Pas encore ouvert",none:"Aucun quiz pour le moment.",nm:"Ton nom",dc:"Nom d’utilisateur Discord",pod:"Numéro de groupe",ql:"Langue du quiz",need:"Remplis ton nom, ton nom d’utilisateur Discord et ton numéro de groupe.",sub:"Envoyer",cfT:"Envoyer tes réponses ?",cfB:"Tu envoies en tant que {n} ({d}), groupe {p}. Tu ne pourras plus modifier tes réponses.",yes:"Oui, envoyer",no:"Revenir",score:"Ton score",pending:"Certaines réponses doivent encore être corrigées par ton superviseur. Ton score final sera mis à jour.",sent:"Ton résultat a été envoyé à ton superviseur ✓",conn:"Connexion impossible. Réessaie dans un instant.",nosetup:"Ce site n’est pas encore connecté.",tzn:"Toutes les heures sont en heure d’Algérie.",att:"Tentatives autorisées",unl:"illimitées",e_attempts:"Tu n’as plus de tentatives pour ce quiz.",e_closed:"Ce quiz est fermé.",e_notopen:"Ce quiz n’est pas encore ouvert.",e_notfound:"Ce quiz n’existe pas.",e_other:"Une erreur s’est produite. Réessaie.",right:"Correct",wrong:"Faux",corr:"Bonne réponse",model:"Réponse modèle",ph:"Écris ta réponse",q:"Question",pts:"pts",wait:"Chargement…"}};
+let lang="en",who={n:"",d:"",p:""},TH="light",cur=null,ql="en";
+const app=document.getElementById("app"),t=k=>S[lang][k];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=ms=>new Date(ms).toLocaleString(lang=="fr"?"fr-FR":"en-GB",{timeZone:"Africa/Algiers",dateStyle:"medium",timeStyle:"short"});
+const L=(o,l)=>(o&&(o[l]||o.en||o.fr))||"";
+const ok=()=>API.startsWith("https://");
+async function get(p){if(!ok())return null;try{return await (await fetch(API+"?"+new URLSearchParams(p))).json()}catch(e){return null}}
+async function post(o){if(!ok())return null;try{return await (await fetch(API,{method:"POST",body:JSON.stringify(o)})).json()}catch(e){return null}}
+const top=()=>`<div class="top"><span></span><span><button class="lg" data-l="en">EN</button> <button class="lg" data-l="fr">FR</button></span></div>`;
+const bind=fn=>app.querySelectorAll(".lg").forEach(b=>b.onclick=()=>{lang=b.dataset.l;fn()});
+function msg(txt,fn){app.innerHTML=top()+`<button id="bk">${t("back")}</button><p class="err">${txt}</p>`;bind(fn||home);bk.onclick=home}
+function confirmBox(yes){const o=document.createElement("div");o.className="ov";o.innerHTML=`<div class="card"><h2>${t("cfT")}</h2><p>${esc(t("cfB").replace("{n}",who.n).replace("{d}",who.d).replace("{p}",who.p))}</p><p><button class="p" id="cy">${t("yes")}</button> <button id="cn">${t("no")}</button></p></div>`;document.body.appendChild(o);document.getElementById("cn").onclick=()=>o.remove();document.getElementById("cy").onclick=()=>{o.remove();yes()}}
+async function home(){history.replaceState(null,"",location.pathname);
+app.innerHTML=top()+`<h1>${t("title")}</h1><p class="mu">${t("wait")}</p>`;bind(home);
+const r=await get({action:"topics"});
+if(!r||!r.topics){app.innerHTML=top()+`<h1>${t("title")}</h1><p class="err">${ok()?t("conn"):t("nosetup")}</p>`;bind(home);return}
+app.innerHTML=top()+`<h1>${t("title")}</h1><p class="mu">${t("intro")}</p><h2>${t("topics")}</h2><div class="grid">${r.topics.map(x=>`<button class="card topic" data-id="${esc(x.id)}">${esc(x.e)} ${esc(L(x,lang))}<small>${x.open} ${t("open_n")}</small></button>`).join("")}</div><p class="mu">${t("tzn")}</p>`;
+bind(home);app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>topicView(b.dataset.id,b.textContent))}
+async function topicView(id){app.innerHTML=top()+`<button id="bk">${t("back")}</button><p class="mu">${t("wait")}</p>`;bind(()=>topicView(id));bk.onclick=home;
+const r=await get({action:"quizzes",topic:id});if(!r||!r.quizzes){msg(t("conn"));return}
+const now=Date.now();
+app.innerHTML=top()+`<button id="bk">${t("back")}</button><h1>${t("topics")}</h1>`+(r.quizzes.length?r.quizzes.map(q=>`<div class="card" style="margin-bottom:12px"><b>${esc(L(q.title,lang))}</b><p class="mu">${now<q.open?t("opens")+": "+fmt(q.open):t("closes")+": "+fmt(q.close)} · ${t("att")}: ${q.att?q.att:t("unl")}</p>${now>=q.open?`<button class="p go" data-id="${q.id}">${t("start")}</button>`:`<span class="mu">${t("soon")}</span>`}</div>`).join(""):`<p class="mu">${t("none")}</p>`)+`<p class="mu">${t("tzn")}</p>`;
+bind(()=>topicView(id));bk.onclick=home;app.querySelectorAll(".go").forEach(b=>b.onclick=()=>intro(b.dataset.id))}
+async function intro(id){app.innerHTML=top()+`<p class="mu">${t("wait")}</p>`;bind(()=>intro(id));
+const r=await get({action:"quiz",id});if(!r)return msg(t("conn"));
+if(r.error)return msg(t("e_notfound"));
+if(r.status=="upcoming")return msg(t("e_notopen")+" ("+t("opens")+": "+fmt(r.open)+")");
+if(r.status=="closed")return msg(t("e_closed"));
+cur=r.quiz;ql=cur.langs.indexOf(lang)>=0?lang:cur.langs[0];
+app.innerHTML=top()+`<button id="bk">${t("back")}</button><h1>${esc(L(cur.title,ql))}</h1><p class="mu">${t("closes")}: ${fmt(cur.close)} · ${t("att")}: ${cur.att?cur.att:t("unl")}</p>
+<div class="row"><div><label>${t("nm")}</label><input type="text" id="wn" value="${esc(who.n)}"></div><div><label>${t("dc")}</label><input type="text" id="wd" value="${esc(who.d)}"></div><div><label>${t("pod")}</label><input type="text" id="wp" value="${esc(who.p)}"></div></div>
+${cur.langs.length>1?`<label>${t("ql")}</label><select id="wl">${cur.langs.map(l=>`<option value="${l}" ${l==ql?"selected":""}>${l=="en"?"English":"Français"}</option>`).join("")}</select>`:""}
+<p id="msg" class="err"></p><p><button class="p" id="st">${t("start")}</button></p>`;
+bind(()=>{who={n:wn.value,d:wd.value,p:wp.value};intro(id)});bk.onclick=()=>topicView(cur.tid);
+st.onclick=()=>{who={n:wn.value.trim(),d:wd.value.trim(),p:wp.value.trim()};if(!who.n||!who.d||!who.p){msg_.textContent=t("need");return}if(document.getElementById("wl"))ql=wl.value;quiz()}}
+const msg_=new Proxy({},{get(_,k){return document.getElementById("msg")[k]},set(_,k,v){document.getElementById("msg")[k]=v;return true}});
+function quiz(){
+app.innerHTML=`<button id="bk">${t("back")}</button><h1>${esc(L(cur.title,ql))}</h1><p class="mu">${esc(who.n)} · ${esc(who.d)} · ${t("pod")} ${esc(who.p)}</p>`+cur.q.map((x,i)=>`<div class="q"><b>${i+1}. ${esc(L(x,ql))}</b> <span class="mu">(${x.pts} ${t("pts")})</span>${x.type=="short"?`<textarea id="a${i}" rows="3" placeholder="${t("ph")}"></textarea>`:x.opts.map(o=>`<label class="o"><input type="radio" name="a${i}" value="${o.i}"> ${esc(L(o,ql))}</label>`).join("")}</div>`).join("")+`<p id="msg" class="err"></p><button class="p" id="go">${t("sub")}</button>`;
+bk.onclick=()=>intro(cur.id);go.onclick=()=>confirmBox(send);window.scrollTo(0,0)}
+async function send(){const answers=cur.q.map((x,i)=>{if(x.type=="short")return document.getElementById("a"+i).value.trim().slice(0,2000);const r=document.querySelector(`input[name=a${i}]:checked`);return r?Number(r.value):null});
+app.innerHTML=`<p class="mu">${t("wait")}</p>`;
+const r=await post({action:"submit",id:cur.id,name:who.n,discord:who.d,pod:who.p,lang:ql,answers:answers});
+if(!r)return msg(t("conn"));
+if(r.error){const m={attempts:"e_attempts",closed:"e_closed",notopen:"e_notopen",notfound:"e_notfound"}[r.error]||"e_other";return msg(t(m))}
+let html=`<h1>${esc(L(cur.title,ql))}</h1><div class="card"><p class="big">${r.score}/${r.max}</p><h2>${t("score")}</h2>${r.pending?`<p class="mu">${t("pending")}</p>`:""}</div><p>${t("sent")}</p>`;
+if(r.review)html+=r.review.map((v,i)=>{const x=cur.q[i];let s=`<div class="q"><b>${i+1}. ${esc(L(x,ql))}</b>`;
+if(v.type=="short")s+=v.model?`<p class="mu">${t("model")}: ${esc(v.model)}</p>`:"";else s+=`<p>${v.ok?"✅ "+t("right"):"❌ "+t("wrong")}</p><p class="mu">${t("corr")}: ${esc(L(x.opts[v.c],ql))}</p>`;return s+"</div>"}).join("");
+app.innerHTML=html+`<p><button id="bk">${t("back")}</button></p>`;bk.onclick=home;window.scrollTo(0,0)}
+try{TH=localStorage.getItem("pods_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}
+const thb=document.getElementById("th");
+const applyTh=()=>{document.documentElement.setAttribute("data-theme",TH);thb.setAttribute("aria-checked",TH=="dark");thb.firstChild.textContent=TH=="dark"?"🌙":"☀️"};
+thb.onclick=()=>{TH=TH=="dark"?"light":"dark";try{localStorage.setItem("pods_theme",TH)}catch(e){}applyTh()};applyTh();
+try{lang=(navigator.language||"en").slice(0,2)=="fr"?"fr":"en"}catch(e){}
+const qp=new URLSearchParams(location.search).get("quiz");
+if(qp)intro(qp);else home();
+
+</script></body></html>

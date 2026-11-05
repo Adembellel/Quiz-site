@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Learning Pods: Supervisor space</title>
+<style>
+:root{--bg:#f6f3ec;--fg:#1b1f3b;--card:#fff;--bd:#e4dfd3;--ac:#d9622b;--mu:#6b6f86;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1f3b;--fg:#f6f3ec;--card:#262b52;--bd:#383e6e;--mu:#aab0d0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1f3b;--fg:#f6f3ec;--card:#262b52;--bd:#383e6e;--mu:#aab0d0;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Helvetica,Arial,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:30px;margin:0 0 4px}h2{font-size:22px}p.mu,.mu{color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin:16px 0}
+.card,.q{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:10px 14px}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.topic{text-align:left;font-size:18px}.topic small{display:block;color:var(--mu);font-size:13px}
+input[type=text],textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:200px}
+label.o{display:block;padding:8px 10px;margin:6px 0;border:1px solid var(--bd);border-radius:10px;cursor:pointer}
+label.o:has(input:checked){border-color:var(--ac);background:var(--bg)}
+.lv{margin:28px 0 8px;color:var(--ac);font-weight:700;text-transform:uppercase;font-size:13px;letter-spacing:.08em}
+.bar{height:10px;border-radius:5px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.big{font-size:48px;font-weight:700;margin:0}.err{color:#c0392b;font-weight:700}
+.top{display:flex;justify-content:space-between;margin-bottom:8px}table{border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid var(--bd);padding:6px 10px;text-align:left;white-space:nowrap}.tc{display:flex;flex-direction:column;gap:6px}.tc .topic{flex:1}.ed{font-size:13px}label{display:block;margin-top:8px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}.ov .card{max-width:440px}.sw{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:40;width:58px;height:30px;border-radius:15px;border:1px solid var(--bd);background:var(--card);padding:0}.sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ac);transition:transform .2s;display:flex;align-items:center;justify-content:center;font-size:13px;font-style:normal}.sw[aria-checked=true] i{transform:translateX(28px)}main{padding-top:56px}select{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);max-width:100%}input[type=number],input[type=datetime-local]{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);box-sizing:border-box;max-width:100%}.q{margin:12px 0}main{max-width:900px}</style></head><body><main id="app"></main><button id="th" class="sw" role="switch" aria-label="Dark mode" aria-checked="false"><i></i></button>
+<script>
+const API="https://script.google.com/macros/s/AKfycbwMyOAvUDFrGT_1nnZRF5mQhG8UccLvZ74rsVH0ujYCGc8WLGG_WD5hmFMsSdveJTlq4A/exec";
+let CODE="",TOPIC=null,qz=null,TH="light";
+const app=document.getElementById("app");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const toInput=ms=>ms?new Date(ms+3600000).toISOString().slice(0,16):"";
+const fromInput=v=>v?new Date(v+":00+01:00").getTime():0;
+const fmt=ms=>new Date(ms).toLocaleString("en-GB",{timeZone:"Africa/Algiers",dateStyle:"medium",timeStyle:"short"});
+const LN={en:"English",fr:"Français"},TYPES={mc:"Multiple choice",tf:"True / False",short:"Short answer"};
+async function api(o){if(!API.startsWith("https://"))return{error:"This site isn’t connected yet. Put the web app link in supervisor.html."};
+try{return await (await fetch(API,{method:"POST",body:JSON.stringify(Object.assign({code:CODE},o))})).json()}catch(e){return{error:"Couldn’t connect. Please try again."}}}
+function confirmBox(title,body,okLabel,yes){const o=document.createElement("div");o.className="ov";o.innerHTML=`<div class="card"><h2>${esc(title)}</h2><p>${esc(body)}</p><p><button class="p" id="cy">${esc(okLabel)}</button> <button id="cn">Cancel</button></p></div>`;document.body.appendChild(o);document.getElementById("cn").onclick=()=>o.remove();document.getElementById("cy").onclick=()=>{o.remove();yes()}}
+function login(m){app.innerHTML=`<h1>Supervisor space</h1><p class="mu">Enter your topic’s secret code. All supervisors of a topic share the same code and the same quizzes.</p><input type="text" id="cd" autocomplete="off"><p class="err">${esc(m||"")}</p><button class="p" id="lg">Enter</button>`;
+const go=async()=>{CODE=cd.value.trim();const r=await api({action:"sup_login"});if(r.error){login(r.error=="code"?"That code isn’t valid.":r.error);return}TOPIC=r.topic;try{sessionStorage.setItem("qc",CODE)}catch(e){}dash()};
+lg.onclick=go;cd.onkeydown=e=>{if(e.key=="Enter")go()}}
+async function dash(){app.innerHTML=`<div class="top"><span class="mu">${esc(TOPIC.e)} ${esc(TOPIC.en)}</span><button id="out">Sign out</button></div><h1>Your quizzes</h1><p class="mu">Times use Algeria time. You can edit or delete a quiz until the first member submits.</p><p><button class="p" id="nw">+ New quiz</button></p><div id="ls">Loading…</div>`;
+out.onclick=()=>{CODE="";try{sessionStorage.removeItem("qc")}catch(e){}login()};nw.onclick=()=>edit(null);
+const r=await api({action:"sup_list"});if(r.error){ls.innerHTML=`<p class="err">${esc(r.error)}</p>`;return}
+const now=Date.now();
+ls.innerHTML=r.quizzes.length?r.quizzes.map(q=>`<div class="card" style="margin-bottom:12px"><b>${esc(q.title)}</b><p class="mu">${now<q.open?"Opens soon":now>q.close?"Closed":"Open now"} · Opens ${fmt(q.open)} · Closes ${fmt(q.close)}<br>${q.n} submission(s)${q.pending?`, <b>${q.pending} to mark</b>`:""} · Attempts: ${q.att||"unlimited"} · Members see: ${q.show=="answers"?"score and answers":"score only"}</p>
+<button class="rs" data-id="${q.id}" data-t="${esc(q.title)}">Results</button> <button class="ed" data-id="${q.id}" ${q.n?"disabled":""}>Edit</button> <button class="dl" data-id="${q.id}" ${q.n?"disabled":""}>Delete</button> <button class="cp" data-id="${q.id}">Copy link</button></div>`).join(""):`<p class="mu">No quizzes yet. Press “New quiz” to create one.</p>`;
+ls.querySelectorAll(".rs").forEach(b=>b.onclick=()=>results(b.dataset.id,b.dataset.t));
+ls.querySelectorAll(".ed").forEach(b=>b.onclick=()=>edit(b.dataset.id));
+ls.querySelectorAll(".dl").forEach(b=>b.onclick=()=>confirmBox("Delete this quiz?","This can’t be undone.","Delete",async()=>{const x=await api({action:"sup_delete",id:b.dataset.id});if(x.error)alert(x.error);dash()}));
+ls.querySelectorAll(".cp").forEach(b=>b.onclick=async()=>{const u=new URL("index.html?quiz="+b.dataset.id,location.href).href;try{await navigator.clipboard.writeText(u);b.textContent="Copied ✓"}catch(e){prompt("Copy this link:",u)}})}
+const newQ=type=>({type:type,en:"",fr:"",pts:1,opts:[{},{},{},{}],c:0,model:""});
+async function edit(id){
+if(!id){qz={id:null,ten:"",tfr:"",open:0,close:0,att:1,show:"score",langs:{en:true,fr:false},q:[newQ("mc")]};editor();return}
+const r=await api({action:"sup_get",id});if(r.error){alert(r.error);return}const z=r.quiz;
+qz={id:z.id,ten:z.ten,tfr:z.tfr,open:z.open,close:z.close,att:z.att,show:z.show,langs:{en:z.data.langs.indexOf("en")>=0,fr:z.data.langs.indexOf("fr")>=0},q:z.data.q};
+qz.q.forEach(x=>{x.opts=x.opts||[];if(x.type=="mc")while(x.opts.length<4)x.opts.push({})});editor()}
+function qHtml(x,i){const ls=Object.keys(LN).filter(l=>qz.langs[l]);
+let s=`<div class="q"><div class="row" style="align-items:end"><b>Question ${i+1}</b><div><label>Type</label><select id="t${i}">${Object.keys(TYPES).map(k=>`<option value="${k}" ${x.type==k?"selected":""}>${TYPES[k]}</option>`).join("")}</select></div><div><label>Points</label><input type="number" id="p${i}" value="${x.pts||1}" min="0.5" step="0.5"></div><div style="flex:0 0 auto;min-width:0"><button class="rm" data-i="${i}">Remove</button></div></div>`;
+ls.forEach(l=>s+=`<label>Question (${LN[l]})</label><textarea id="q${i}_${l}" rows="2">${esc(x[l])}</textarea>`);
+if(x.type=="mc"){s+=`<p class="mu">Write the answers and tick the correct one.</p>`;x.opts.forEach((o,k)=>{s+=`<div class="row" style="align-items:end"><div style="flex:0 0 auto;min-width:0"><label class="o"><input type="radio" name="c${i}" value="${k}" ${x.c==k?"checked":""}> Correct</label></div>${ls.map(l=>`<div><input type="text" id="o${i}_${k}_${l}" placeholder="Answer ${k+1} (${LN[l]})" value="${esc(o[l])}"></div>`).join("")}</div>`})}
+else if(x.type=="tf")s+=`<label class="o"><input type="radio" name="c${i}" value="0" ${x.c!=1?"checked":""}> The statement is True</label><label class="o"><input type="radio" name="c${i}" value="1" ${x.c==1?"checked":""}> The statement is False</label>`;
+else s+=`<label>Model answer (only you see it, optional)</label><input type="text" id="m${i}" value="${esc(x.model)}">`;
+return s+"</div>"}
+function editor(){const Lg=qz.langs;
+app.innerHTML=`<button id="bk">← Back</button><h1>${qz.id?"Edit quiz":"New quiz"}</h1><p id="msg" class="err"></p>
+<div class="card"><label>Languages of this quiz</label><label class="o"><input type="checkbox" id="g_en" ${Lg.en?"checked":""}> English</label><label class="o"><input type="checkbox" id="g_fr" ${Lg.fr?"checked":""}> Français</label>
+${Lg.en?`<label>Title (English)</label><input type="text" id="ten" value="${esc(qz.ten)}">`:""}${Lg.fr?`<label>Title (Français)</label><input type="text" id="tfr" value="${esc(qz.tfr)}">`:""}
+<div class="row"><div><label>Opens (Algeria time)</label><input type="datetime-local" id="op" value="${toInput(qz.open)}"></div><div><label>Closes (Algeria time)</label><input type="datetime-local" id="cl" value="${toInput(qz.close)}"></div></div>
+<div class="row"><div><label>Attempts per member</label><select id="att">${[[1,"1"],[2,"2"],[3,"3"],[5,"5"],[0,"Unlimited (best score counts)"]].map(a=>`<option value="${a[0]}" ${qz.att==a[0]?"selected":""}>${a[1]}</option>`).join("")}</select></div>
+<div><label>After submitting, members see</label><select id="sh"><option value="score" ${qz.show=="score"?"selected":""}>Score only</option><option value="answers" ${qz.show=="answers"?"selected":""}>Score and correct answers</option></select></div></div></div>`
++qz.q.map(qHtml).join("")+`<p><select id="nt">${Object.keys(TYPES).map(k=>`<option value="${k}">${TYPES[k]}</option>`).join("")}</select> <button id="aq">+ Add a question</button></p><p><button class="p" id="sv">Save quiz</button></p>`;
+const re=()=>{collect();editor()};
+bk.onclick=()=>confirmBox("Leave without saving?","Your changes on this page will be lost.","Leave",dash);
+g_en.onchange=re;g_fr.onchange=re;aq.onclick=()=>{collect();qz.q.push(newQ(nt.value));editor()};
+app.querySelectorAll(".rm").forEach(b=>b.onclick=()=>{collect();qz.q.splice(+b.dataset.i,1);editor()});
+qz.q.forEach((x,i)=>{document.getElementById("t"+i).onchange=e=>{collect();x.type=e.target.value;if(x.type=="mc")while(x.opts.length<4)x.opts.push({});if(x.type=="tf")x.c=0;editor()}});
+sv.onclick=async()=>{collect();sv.disabled=true;const r=await api({action:"sup_save",quiz:{id:qz.id,ten:qz.ten,tfr:qz.tfr,open:qz.open,close:qz.close,att:qz.att,show:qz.show,langs:qz.langs,q:qz.q}});
+if(r.error){msg.textContent=r.error;sv.disabled=false;window.scrollTo(0,0);return}dash()}}
+function collect(){const v=(id,o)=>{const e=document.getElementById(id);return e?e.value:o};
+qz.langs={en:g_en.checked,fr:g_fr.checked};qz.ten=v("ten",qz.ten);qz.tfr=v("tfr",qz.tfr);qz.open=fromInput(v("op",""))||0;qz.close=fromInput(v("cl",""))||0;qz.att=Number(v("att",qz.att));qz.show=v("sh",qz.show);
+qz.q.forEach((x,i)=>{x.type=v("t"+i,x.type);x.pts=Number(v("p"+i,x.pts))||1;x.en=v(`q${i}_en`,x.en);x.fr=v(`q${i}_fr`,x.fr);x.model=v("m"+i,x.model);
+const c=document.querySelector(`input[name=c${i}]:checked`);if(c)x.c=Number(c.value);
+if(x.type=="mc")x.opts.forEach((o,k)=>{o.en=v(`o${i}_${k}_en`,o.en);o.fr=v(`o${i}_${k}_fr`,o.fr)})})}
+async function results(id,title){app.innerHTML=`<button id="bk">← Back</button><h1>Results</h1><p class="mu">${esc(title||"")}</p><p id="cnt" class="mu">Loading…</p><div style="overflow-x:auto"><table id="tb"></table></div><p class="mu">The full list is also in your Google Sheet, in the tab “Results ${esc(TOPIC.id)}”. “Best” marks each member’s highest score.</p>`;bk.onclick=dash;
+const r=await api({action:"sup_results",id});if(r.error){cnt.textContent=r.error;return}
+cnt.textContent=r.results.length+" submission(s)";
+tb.innerHTML="<tr><th>Date</th><th>Name</th><th>Discord</th><th>Pod</th><th>Language</th><th>Attempt</th><th>Score</th><th>Status</th><th>Best</th><th></th></tr>"+r.results.map(x=>`<tr><td>${fmt(x.date)}</td><td>${esc(x.name)}</td><td>${esc(x.discord)}</td><td>${esc(x.pod)}</td><td>${esc(x.lang)}</td><td>${x.attempt}</td><td>${x.total}/${x.max}</td><td>${esc(x.status)}</td><td>${x.best?"✓":""}</td><td>${x.status=="Needs marking"?`<button class="mk" data-s="${x.sid}">Mark</button>`:""}</td></tr>`).join("");
+tb.querySelectorAll(".mk").forEach(b=>b.onclick=()=>mark(id,title,b.dataset.s))}
+async function mark(id,title,sid){app.innerHTML=`<button id="bk">← Back</button><h1>Mark short answers</h1><p id="msg" class="err"></p><div id="mm">Loading…</div>`;bk.onclick=()=>results(id,title);
+const r=await api({action:"sup_sub",sid});if(r.error){mm.innerHTML=`<p class="err">${esc(r.error)}</p>`;return}
+mm.innerHTML=`<p class="mu">${esc(r.name)} · ${esc(r.discord)}</p>`+r.items.map(x=>`<div class="q"><b>${esc(x.en||x.fr)}</b>${x.model?`<p class="mu">Model answer: ${esc(x.model)}</p>`:""}<p class="card" style="white-space:pre-wrap">${esc(x.answer)||"(no answer)"}</p><label>Points (max ${x.pts})</label><input type="number" class="mp" data-i="${x.i}" min="0" max="${x.pts}" step="0.5" value="${x.mark==null?0:x.mark}"></div>`).join("")+`<p><button class="p" id="sm">Save marks</button></p>`;
+sm.onclick=async()=>{const marks={};mm.querySelectorAll(".mp").forEach(e=>marks[e.dataset.i]=Number(e.value)||0);const x=await api({action:"sup_mark",sid,marks});if(x.error){msg.textContent=x.error;return}results(id,title)}}
+try{TH=localStorage.getItem("pods_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}
+const thb=document.getElementById("th");
+const applyTh=()=>{document.documentElement.setAttribute("data-theme",TH);thb.setAttribute("aria-checked",TH=="dark");thb.firstChild.textContent=TH=="dark"?"🌙":"☀️"};
+thb.onclick=()=>{TH=TH=="dark"?"light":"dark";try{localStorage.setItem("pods_theme",TH)}catch(e){}applyTh()};applyTh();
+(async()=>{let c="";try{c=sessionStorage.getItem("qc")||""}catch(e){}if(c){CODE=c;const r=await api({action:"sup_login"});if(r.topic){TOPIC=r.topic;dash();return}}login()})();
+
+</script></body></html>
