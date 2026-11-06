@@ -36,8 +36,8 @@ function confirmBox(title,body,okLabel,yes){const o=document.createElement("div"
 function login(m){app.innerHTML=`<h1>Supervisor space</h1><p class="mu">Enter your topic’s secret code. All supervisors of a topic share the same code and the same quizzes.</p><input type="text" id="cd" autocomplete="off"><p class="err">${esc(m||"")}</p><button class="p" id="lg">Enter</button>`;
 const go=async()=>{CODE=cd.value.trim();const r=await api({action:"sup_login"});if(r.error){login(r.error=="code"?"That code isn’t valid.":r.error);return}TOPIC=r.topic;try{sessionStorage.setItem("qc",CODE)}catch(e){}dash()};
 lg.onclick=go;cd.onkeydown=e=>{if(e.key=="Enter")go()}}
-async function dash(){app.innerHTML=`<div class="top"><span class="mu">${esc(TOPIC.e)} ${esc(TOPIC.en)}</span><button id="out">Sign out</button></div><h1>Your quizzes</h1><p class="mu">Times use Algeria time. You can edit or delete a quiz until the first member submits.</p><p><button class="p" id="nw">+ New quiz</button></p><div id="ls">Loading…</div>`;
-out.onclick=()=>{CODE="";try{sessionStorage.removeItem("qc")}catch(e){}login()};nw.onclick=()=>edit(null);
+async function dash(){app.innerHTML=`<div class="top"><span class="mu">${esc(TOPIC.e)} ${esc(TOPIC.en)}</span><button id="out">Sign out</button></div><h1>Your quizzes</h1><p class="mu">Times use Algeria time. You can edit or delete a quiz until the first member submits.</p><p><button class="p" id="nw">+ New quiz</button></p><div id="ls">Loading…</div><h1 style="margin-top:32px">Lab work</h1><p class="mu">Members upload files privately; only supervisors of this topic can see them.</p><p><button class="p" id="nl">+ New lab</button></p><div id="ll">Loading…</div>`;
+out.onclick=()=>{CODE="";try{sessionStorage.removeItem("qc")}catch(e){}login()};nw.onclick=()=>edit(null);nl.onclick=()=>labEdit(null);loadLabs();
 const r=await api({action:"sup_list"});if(r.error){ls.innerHTML=`<p class="err">${esc(r.error)}</p>`;return}
 const now=Date.now();
 ls.innerHTML=r.quizzes.length?r.quizzes.map(q=>`<div class="card" style="margin-bottom:12px"><b>${esc(q.title)}</b><p class="mu">${now<q.open?"Opens soon":now>q.close?"Closed":"Open now"} · Opens ${fmt(q.open)} · Closes ${fmt(q.close)}<br>${q.n} submission(s)${q.pending?`, <b>${q.pending} to mark</b>`:""} · Attempts: ${q.att||"unlimited"} · Members see: ${q.show=="answers"?"score and answers":"score only"}</p>
@@ -88,6 +88,35 @@ async function mark(id,title,sid){app.innerHTML=`<button id="bk">← Back</butto
 const r=await api({action:"sup_sub",sid});if(r.error){mm.innerHTML=`<p class="err">${esc(r.error)}</p>`;return}
 mm.innerHTML=`<p class="mu">${esc(r.name)} · ${esc(r.discord)}</p>`+r.items.map(x=>`<div class="q"><b>${esc(x.en||x.fr)}</b>${x.model?`<p class="mu">Model answer: ${esc(x.model)}</p>`:""}<p class="card" style="white-space:pre-wrap">${esc(x.answer)||"(no answer)"}</p><label>Points (max ${x.pts})</label><input type="number" class="mp" data-i="${x.i}" min="0" max="${x.pts}" step="0.5" value="${x.mark==null?0:x.mark}"></div>`).join("")+`<p><button class="p" id="sm">Save marks</button></p>`;
 sm.onclick=async()=>{const marks={};mm.querySelectorAll(".mp").forEach(e=>marks[e.dataset.i]=Number(e.value)||0);const x=await api({action:"sup_mark",sid,marks});if(x.error){msg.textContent=x.error;return}results(id,title)}}
+async function loadLabs(){const r=await api({action:"sup_labs"});const ll=document.getElementById("ll");if(!ll)return;if(r.error){ll.innerHTML=`<p class="err">${esc(r.error)}</p>`;return}
+const now=Date.now();
+ll.innerHTML=r.labs.length?r.labs.map(l=>`<div class="card" style="margin-bottom:12px"><b>${esc(l.title)}</b><p class="mu">${now<l.open?"Opens soon":now>l.close?"Closed":"Open now"} · Opens ${fmt(l.open)} · Closes ${fmt(l.close)}<br>${l.n} submission(s)${l.unmarked?`, <b>${l.unmarked} to mark</b>`:""} · Max mark: ${l.max} · Files allowed: ${l.files}</p>
+<button class="ls" data-id="${l.id}" data-t="${esc(l.title)}">Submissions</button> <button class="le" data-id="${l.id}">Edit</button> <button class="ld" data-id="${l.id}" ${l.n?"disabled":""}>Delete</button> <button class="lc" data-id="${l.id}">Copy link</button></div>`).join(""):`<p class="mu">No labs yet. Press “New lab” to create one.</p>`;
+ll.querySelectorAll(".ls").forEach(b=>b.onclick=()=>labSubs(b.dataset.id,b.dataset.t));
+ll.querySelectorAll(".le").forEach(b=>b.onclick=()=>labEdit(b.dataset.id));
+ll.querySelectorAll(".ld").forEach(b=>b.onclick=()=>confirmBox("Delete this lab?","This can’t be undone.","Delete",async()=>{const x=await api({action:"sup_lab_delete",id:b.dataset.id});if(x.error)alert(x.error);dash()}));
+ll.querySelectorAll(".lc").forEach(b=>b.onclick=async()=>{const u=new URL("index.html?lab="+b.dataset.id,location.href).href;try{await navigator.clipboard.writeText(u);b.textContent="Copied ✓"}catch(e){prompt("Copy this link:",u)}})}
+let lb=null;
+async function labEdit(id){
+if(!id)lb={id:null,ten:"",tfr:"",ien:"",ifr:"",open:0,close:0,max:20,files:1};
+else{const r=await api({action:"sup_lab_get",id});if(r.error){alert(r.error);return}lb=r.lab}
+app.innerHTML=`<button id="bk">← Back</button><h1>${lb.id?"Edit lab":"New lab"}</h1><p class="mu">Members upload files privately. Only supervisors of this topic can see them. You can edit a lab at any time, for example to extend the deadline.</p><p id="msg" class="err"></p>
+<div class="card"><label>Title (English)</label><input type="text" id="lten" value="${esc(lb.ten)}"><label>Title (Français, optional)</label><input type="text" id="ltfr" value="${esc(lb.tfr)}">
+<label>Instructions (English)</label><textarea id="lien" rows="4">${esc(lb.ien)}</textarea><label>Instructions (Français, optional)</label><textarea id="lifr" rows="4">${esc(lb.ifr)}</textarea>
+<div class="row"><div><label>Opens (Algeria time)</label><input type="datetime-local" id="lop" value="${toInput(lb.open)}"></div><div><label>Deadline (Algeria time)</label><input type="datetime-local" id="lcl" value="${toInput(lb.close)}"></div></div>
+<div class="row"><div><label>Maximum mark</label><input type="number" id="lmx" min="1" step="0.5" value="${lb.max}"></div><div><label>Files allowed per member</label><select id="lfl">${[1,2,3,4,5].map(n=>`<option value="${n}" ${lb.files==n?"selected":""}>${n}</option>`).join("")}</select></div></div></div>
+<p><button class="p" id="sv">Save lab</button></p>`;
+bk.onclick=dash;
+sv.onclick=async()=>{sv.disabled=true;const r=await api({action:"sup_lab_save",lab:{id:lb.id,ten:lten.value,tfr:ltfr.value,ien:lien.value,ifr:lifr.value,open:fromInput(lop.value),close:fromInput(lcl.value),max:Number(lmx.value),files:Number(lfl.value)}});
+if(r.error){msg.textContent=r.error;sv.disabled=false;window.scrollTo(0,0);return}dash()}}
+async function labSubs(id,title){app.innerHTML=`<button id="bk">← Back</button><h1>Lab submissions</h1><p class="mu">${esc(title||"")}</p><p id="cnt" class="mu">Loading…</p><div style="overflow-x:auto"><table id="tb"></table></div><p class="mu">Files stay private. Press a file name to download it.</p>`;bk.onclick=dash;
+const r=await api({action:"sup_lab_subs",id});if(r.error){cnt.textContent=r.error;return}
+cnt.textContent=r.subs.length+" submission(s) · maximum mark "+r.max;
+tb.innerHTML="<tr><th>Date</th><th>Name</th><th>Discord</th><th>Pod</th><th>Files</th><th>Mark</th><th></th></tr>"+r.subs.map((x,i)=>`<tr><td>${fmt(x.date)}</td><td>${esc(x.name)}</td><td>${esc(x.discord)}</td><td>${esc(x.pod)}</td><td>${x.files.map((f,k)=>`<button class="dw" data-r="${x.receipt}" data-k="${k}" data-n="${esc(f.n)}">${esc(f.n)}</button>`).join(" ")}</td><td><input type="number" class="mk" data-r="${x.receipt}" min="0" max="${r.max}" step="0.5" value="${x.mark==null?"":x.mark}" style="width:90px"></td><td><button class="sm" data-r="${x.receipt}">Save</button></td></tr>`).join("");
+tb.querySelectorAll(".dw").forEach(b=>b.onclick=async()=>{b.disabled=true;const f=await api({action:"sup_lab_file",receipt:b.dataset.r,idx:Number(b.dataset.k)});b.disabled=false;if(f.error){alert(f.error);return}
+const bin=atob(f.data),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([u],{type:f.type||"application/octet-stream"}));a.download=f.name;document.body.appendChild(a);a.click();a.remove()});
+tb.querySelectorAll(".sm").forEach(b=>b.onclick=async()=>{const inp=tb.querySelector(`.mk[data-r="${b.dataset.r}"]`);if(inp.value===""){alert("Type a mark first.");return}const x=await api({action:"sup_lab_mark",receipt:b.dataset.r,mark:Number(inp.value)});if(x.error){alert(x.error);return}b.textContent="Saved ✓"})}
 try{TH=localStorage.getItem("pods_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}
 const thb=document.getElementById("th");
 const applyTh=()=>{document.documentElement.setAttribute("data-theme",TH);thb.setAttribute("aria-checked",TH=="dark");thb.firstChild.textContent=TH=="dark"?"🌙":"☀️"};
